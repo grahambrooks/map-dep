@@ -1,0 +1,183 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            platform: darwin
+            arch: x86_64
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            platform: darwin
+            arch: aarch64
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            platform: linux
+            arch: x86_64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+            platform: linux
+            arch: aarch64
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            platform: win32
+            arch: x86_64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-compilation tools (Linux ARM)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+
+      - name: Get binary name
+        id: binary
+        shell: bash
+        run: |
+          if [ "${{ matrix.platform }}" = "win32" ]; then
+            echo "name=mcp-ping.exe" >> $GITHUB_OUTPUT
+            echo "path=target/${{ matrix.target }}/release/mcp-ping.exe" >> $GITHUB_OUTPUT
+          else
+            echo "name=mcp-ping" >> $GITHUB_OUTPUT
+            echo "path=target/${{ matrix.target }}/release/mcp-ping" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create mcpb package
+        shell: bash
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          PACKAGE_NAME="mcp-ping-${VERSION}-${{ matrix.platform }}-${{ matrix.arch }}"
+          mkdir -p "$PACKAGE_NAME"
+
+          # Update manifest.json with correct version and platform-specific entry point
+          if [ "${{ matrix.platform }}" = "win32" ]; then
+            jq --arg version "$VERSION" \
+               '.version = $version | .server.entry_point = "mcp-ping.exe" | .server.mcp_config.command = "${__dirname}/mcp-ping.exe"' \
+               manifest.json > "$PACKAGE_NAME/manifest.json"
+          else
+            jq --arg version "$VERSION" \
+               '.version = $version' \
+               manifest.json > "$PACKAGE_NAME/manifest.json"
+          fi
+
+          # Copy binary
+          cp "${{ steps.binary.outputs.path }}" "$PACKAGE_NAME/${{ steps.binary.outputs.name }}"
+
+          # Create archive
+          if [ "${{ matrix.platform }}" = "win32" ]; then
+            7z a "${PACKAGE_NAME}.mcpb.zip" "$PACKAGE_NAME"
+            mv "${PACKAGE_NAME}.mcpb.zip" "${PACKAGE_NAME}.mcpb"
+          else
+            tar -czvf "${PACKAGE_NAME}.mcpb" "$PACKAGE_NAME"
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcpb-${{ matrix.platform }}-${{ matrix.arch }}
+          path: "*.mcpb"
+
+  release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Generate registry.json
+        run: |
+          VERSION=${GITHUB_REF_NAME#v}
+          REPO_URL="https://github.com/${{ github.repository }}"
+
+          cat > registry.json << EOF
+          {
+            "schema_version": "1.0",
+            "name": "mcp-ping",
+            "display_name": "MCP Ping Server",
+            "description": "A simple MCP server with a ping tool that responds with pong",
+            "version": "${VERSION}",
+            "author": {
+              "name": "Your Name",
+              "url": "https://github.com/your-username"
+            },
+            "repository": "${REPO_URL}",
+            "license": "MIT",
+            "packages": [
+              {
+                "platform": "darwin",
+                "arch": "x86_64",
+                "url": "${REPO_URL}/releases/download/${GITHUB_REF_NAME}/mcp-ping-${VERSION}-darwin-x86_64.mcpb"
+              },
+              {
+                "platform": "darwin",
+                "arch": "aarch64",
+                "url": "${REPO_URL}/releases/download/${GITHUB_REF_NAME}/mcp-ping-${VERSION}-darwin-aarch64.mcpb"
+              },
+              {
+                "platform": "linux",
+                "arch": "x86_64",
+                "url": "${REPO_URL}/releases/download/${GITHUB_REF_NAME}/mcp-ping-${VERSION}-linux-x86_64.mcpb"
+              },
+              {
+                "platform": "linux",
+                "arch": "aarch64",
+                "url": "${REPO_URL}/releases/download/${GITHUB_REF_NAME}/mcp-ping-${VERSION}-linux-aarch64.mcpb"
+              },
+              {
+                "platform": "win32",
+                "arch": "x86_64",
+                "url": "${REPO_URL}/releases/download/${GITHUB_REF_NAME}/mcp-ping-${VERSION}-win32-x86_64.mcpb"
+              }
+            ]
+          }
+          EOF
+
+      - name: Collect release assets
+        run: |
+          mkdir -p release-assets
+          find artifacts -name "*.mcpb" -exec cp {} release-assets/ \;
+          cp registry.json release-assets/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
