@@ -23,12 +23,13 @@ cargo build --release
 
 The binary will be at `target/release/mcp-ping`.
 
-## Usage
+## Client Configuration
 
-### With Claude Desktop
+### Claude Desktop
 
-Add to your Claude Desktop configuration (`~/.config/claude/claude_desktop_config.json` on Linux/macOS or
-`%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+Add to your Claude Desktop configuration:
+- **macOS/Linux**: `~/.config/claude/claude_desktop_config.json`
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
@@ -40,7 +41,86 @@ Add to your Claude Desktop configuration (`~/.config/claude/claude_desktop_confi
 }
 ```
 
-### Manual Testing
+### Claude Code (CLI)
+
+Add the server using the CLI:
+
+```bash
+claude mcp add ping /path/to/mcp-ping --scope user
+```
+
+Or edit `~/.claude.json` directly:
+
+```json
+{
+  "mcpServers": {
+    "ping": {
+      "type": "stdio",
+      "command": "/path/to/mcp-ping"
+    }
+  }
+}
+```
+
+Verify with `/mcp` command inside Claude Code to check connection status.
+
+### VS Code (GitHub Copilot)
+
+Create `.vscode/mcp.json` in your workspace or configure globally:
+
+```json
+{
+  "servers": {
+    "ping": {
+      "type": "stdio",
+      "command": "/path/to/mcp-ping"
+    }
+  }
+}
+```
+
+Requires VS Code 1.102+ with GitHub Copilot extension.
+
+### Cursor
+
+Add to Cursor's MCP configuration (`~/.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "ping": {
+      "command": "/path/to/mcp-ping"
+    }
+  }
+}
+```
+
+Enable MCP in Cursor settings if not already enabled.
+
+### JetBrains IDEs
+
+For IntelliJ IDEA 2025.2+, RustRover, and other JetBrains IDEs:
+
+1. Go to **Settings | Tools | AI Assistant | MCP Servers**
+2. Click **Add** and configure:
+   - **Name**: `ping`
+   - **Command**: `/path/to/mcp-ping`
+   - **Transport**: `stdio`
+
+Or add to your IDE's MCP configuration file:
+
+```json
+{
+  "servers": {
+    "ping": {
+      "command": "/path/to/mcp-ping",
+      "args": []
+    }
+  }
+}
+```
+
+## Manual Testing
 
 The server communicates over stdio using JSON-RPC. You can test it by running:
 
