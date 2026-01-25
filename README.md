@@ -8,10 +8,28 @@ MCPB Project and specification https://github.com/modelcontextprotocol/mcpb
 
 ## Installation
 
-### From GitHub Releases
+### Using MCPB Bundle (Recommended)
 
-Download the appropriate `.mcpb` package for your platform from
-the [Releases](https://github.com/grahambrooks/mcp-dep/releases) page.
+Download the `.mcpb` package for your platform from the [Releases](https://github.com/grahambrooks/mcp-dep/releases) page:
+
+| Platform | Architecture  | Package                           |
+|----------|---------------|-----------------------------------|
+| macOS    | Intel         | `mcp-ping-*-darwin-x86_64.mcpb`   |
+| macOS    | Apple Silicon | `mcp-ping-*-darwin-aarch64.mcpb`  |
+| Linux    | x86_64        | `mcp-ping-*-linux-x86_64.mcpb`    |
+| Linux    | ARM64         | `mcp-ping-*-linux-aarch64.mcpb`   |
+| Windows  | x86_64        | `mcp-ping-*-win32-x86_64.mcpb`    |
+
+**One-click install (Claude Desktop)**: Double-click the `.mcpb` file to install directly into Claude Desktop on macOS or Windows.
+
+**CLI install**: Use the [mcpb CLI](https://github.com/modelcontextprotocol/mcpb) to install:
+
+```bash
+npm install -g @anthropic-ai/mcpb
+mcpb install mcp-ping-*-darwin-aarch64.mcpb
+```
+
+**Manual install**: Extract the `.mcpb` archive and place the binary in your desired location, then configure your MCP client (see [Client Configuration](#client-configuration) below).
 
 ### From Source
 
@@ -21,7 +39,7 @@ cd mcp-dep
 cargo build --release
 ```
 
-The binary will be at `target/release/mcp-ping`.
+The binary will be at `target/release/mcp-ping` (or `mcp-ping.exe` on Windows).
 
 ## Client Configuration
 
