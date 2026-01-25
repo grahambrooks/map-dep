@@ -133,8 +133,8 @@ jobs:
             "description": "A simple MCP server with a ping tool that responds with pong",
             "version": "${VERSION}",
             "author": {
-              "name": "Your Name",
-              "url": "https://github.com/your-username"
+              "name": "Graham Brooks",
+              "url": "https://github.com/grahambrooks"
             },
             "repository": "${REPO_URL}",
             "license": "MIT",

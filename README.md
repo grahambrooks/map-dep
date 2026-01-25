@@ -1,17 +1,22 @@
 # mcp-ping
 
-A simple MCP (Model Context Protocol) server written in Rust with a single `ping` tool that responds with "pong".
+A simple MCP (Model Context Protocol) server written in Rust with a single `ping` tool that responds with "pong". The
+purpose of this repository is to provide an example of how to pachage and distribute MCP Servers using MCP Bundles (
+MCPB).
+
+MCPB Project and specification https://github.com/modelcontextprotocol/mcpb
 
 ## Installation
 
 ### From GitHub Releases
 
-Download the appropriate `.mcpb` package for your platform from the [Releases](https://github.com/your-username/mcp-dep/releases) page.
+Download the appropriate `.mcpb` package for your platform from
+the [Releases](https://github.com/grahambrooks/mcp-dep/releases) page.
 
 ### From Source
 
 ```bash
-git clone https://github.com/your-username/mcp-dep.git
+git clone https://github.com/grahambrooks/mcp-dep.git
 cd mcp-dep
 cargo build --release
 ```
@@ -22,7 +27,8 @@ The binary will be at `target/release/mcp-ping`.
 
 ### With Claude Desktop
 
-Add to your Claude Desktop configuration (`~/.config/claude/claude_desktop_config.json` on Linux/macOS or `%APPDATA%\Claude\claude_desktop_config.json` on Windows):
+Add to your Claude Desktop configuration (`~/.config/claude/claude_desktop_config.json` on Linux/macOS or
+`%APPDATA%\Claude\claude_desktop_config.json` on Windows):
 
 ```json
 {
@@ -45,13 +51,25 @@ The server communicates over stdio using JSON-RPC. You can test it by running:
 Then send JSON-RPC requests via stdin:
 
 ```json
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "initialize",
+  "params": {
+    "protocolVersion": "2024-11-05",
+    "capabilities": {},
+    "clientInfo": {
+      "name": "test",
+      "version": "1.0.0"
+    }
+  }
+}
 ```
 
 ## Tools
 
-| Tool | Description |
-|------|-------------|
+| Tool   | Description                                  |
+|--------|----------------------------------------------|
 | `ping` | A simple ping tool that responds with "pong" |
 
 ## Development
@@ -91,11 +109,13 @@ Releases are automated via GitHub Actions. To create a new release:
    ```
 
 The workflow builds binaries for:
+
 - macOS (x86_64, aarch64)
 - Linux (x86_64, aarch64)
 - Windows (x86_64)
 
 Each release includes:
+
 - Platform-specific `.mcpb` packages
 - `registry.json` for package discovery
 

@@ -29,7 +29,7 @@ Contributions are welcome! Here's how you can help.
 ## Development Setup
 
 ```bash
-git clone https://github.com/your-username/mcp-dep.git
+git clone https://github.com/grahambrooks/mcp-dep.git
 cd mcp-dep
 cargo build
 cargo test
